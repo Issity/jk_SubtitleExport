@@ -27,10 +27,11 @@ Select subtitle Text Layer you want to export, run the script, and save the file
 */
 
 var theComp = app.project.activeItem;
+var projectPath = app.project.file.path;
 
 // prompt to save file
-var TmpFile = new File(theComp.name + ".srt");
-SRTFile = TmpFile.saveDlg("Save selected layer as SRT file","*.srt");
+var TmpFile = new File(projectPath + "/" + theComp.name + ".srt");
+SRTFile = TmpFile.saveDlg("Save selected layer as SRT file","SubRip:*.srt,All files:*.*");
 
 // if user didn't cancel...
 if (SRTFile != null) {
