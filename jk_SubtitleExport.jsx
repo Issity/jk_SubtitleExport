@@ -51,6 +51,7 @@ if (SRTFile != null) {
       if (totalKeys > 0) {
         for (var j = 1; j <= (totalKeys-1); j++) {
           var selText = selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyValue(j).toString();
+          selText = stripWhitespace(selText);
           if (selText != "") {
             var subStartTime = timeToSRTTimecode(selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyTime(j)+0.0015);
             var subEndTime = timeToSRTTimecode(selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyTime(j+1)+0.0015);
@@ -74,6 +75,10 @@ if (SRTFile != null) {
     }
   }
   // app.endUndoGroup();
+
+  function stripWhitespace(str) {
+      return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  }
 
   function padLeft(num, size) {
     // var s = num+"";
