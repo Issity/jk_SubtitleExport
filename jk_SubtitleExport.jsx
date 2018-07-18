@@ -44,7 +44,7 @@ if (SRTFile != null) {
   checkParam(1); // Check if text layer is selected. Uses needlesly complex function from other script.
   // app.beginUndoGroup("JK_SubtitleExport");
   var selLayer = app.project.activeItem.selectedLayers;
-  var subNumber = 1; //counter for the number above the timecode (in the results)
+  var subNumber = 0; //counter for the number above the timecode (in the results)
   for(var i = 0; i<selLayer.length; i++){
     if(selLayer[i] instanceof TextLayer){
       totalKeys = selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").numKeys;
@@ -56,6 +56,7 @@ if (SRTFile != null) {
             var subEndTime = timeToSRTTimecode(selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyTime(j+1)+0.0015);
 
             //writing the results to file
+            subNumber++;
             SRTFile.write(subNumber);
             SRTFile.write("\r\n");
             SRTFile.write(subStartTime);
@@ -64,7 +65,6 @@ if (SRTFile != null) {
             SRTFile.write("\r\n");
             SRTFile.write(selText);
             SRTFile.write("\r\n\r\n");
-            subNumber++;
           }
         }
         alert("SRT for layer with " + totalKeys + " keyframes and " + subNumber + " subtitles exported");
