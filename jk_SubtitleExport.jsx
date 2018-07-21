@@ -22,31 +22,122 @@ https://aescripts.com/pt_importsubtitles/
 Inspired by Philipp Grolle's script - http://aenhancers.com/viewtopic.php?t=2116
 
 Instructions:
-Select subtitle Text Layer you want to export, run the script, and save the file as .srt.
+This script has two modes of operation:
+- Export selected layer from active timeline.
+- Export first keyframed text layer from each selected comp.
+
+Single layer mode
+Select subtitle Text Layer you want to export, run the script, and save the SRT.
+If multiple layers are selected or selected layer doesn't have keyframes,
+script will throw an error.
+Timeline window must be active.
+
+Comp mode
+Select comps in Project window, run the script, and select destination folder.
+Script will export first keyframed and active text layer from each comp.
+By default script will use Comp name for file name. If file with the same name
+already exists, File Save window will appear.
+
+Version history:
+
+0.4.0
+- export from multiple comps at once
+
+0.3.2
+- export is limited to layer IN and OUT points
+- fixed/improved error checking
+
+0.3.1
+- contents of last keyframe are no longer ignored
+- default save location is the same as AEP
+- leading and trailing whitespace is removed
+
+0.3
+- first public version
 
 */
 
 var scriptName = "JK_SubtitleExport";
-var theComp = app.project.activeItem;
 var projectPath = app.project.file.path;
+var saveFolder = new Folder(projectPath); // default save path is AEP location
+var selectedComps = app.project.selection;
+var mode = 0; // 0 - nothing selected; 1 - single layer; 2 - selected comps
+var filesExported = 0;
+var abortMission = false;
 
-  // Convert Subtitles
+if (selectedComps.length != 0) {
+  mode = 2;
+}
+
+if ((app.project.activeItem instanceof CompItem) && (app.project.activeItem.selectedLayers.length != 0)) {
+  mode = 1;
+}
+
+switch (mode) {
+  case 0: // Nothing selected
+  alert("Please select either a single text layer, composition or multiple compositions.", "Nothing selected!", true);
+  break;
+
+  case 1: // Single layer
   var selLayers = app.project.activeItem.selectedLayers;
   try {
-    if (selLayers.length > 1) throw "Multiple layers selected.";
-    if (selLayers.length == 0) throw "No layer selected.";
-    if (!(selLayers[0] instanceof TextLayer)) throw "Selected layer is not a text layer.";
+    if (selLayers.length > 1) throw "Multiple layers selected!";
+    if (selLayers.length == 0) throw "No layer selected!\nThis message should never be displayed!";
+    if (!(selLayers[0] instanceof TextLayer)) throw "Selected layer is not a text layer!";
     if (selLayers.length != 1) throw "???";
+    if (selLayers[0].property("ADBE Text Properties").property("ADBE Text Document").numKeys == 0) throw "Selected layer has no keyframes!";
 
-    var selLayerSourceText = selLayers[0].property("ADBE Text Properties").property("ADBE Text Document");
-    var totalKeys = selLayerSourceText.numKeys;
+    saveLayerToSRT(selLayers[0]);
+  }
+  catch(err) {
+    alert(err, scriptName, true);
+  }
+  break;
 
-    if (totalKeys == 0) throw "Selected layer has no keyframes";
+  case 2: // Comp(s)
+  try {
+    var compCounter = 0; // number of Comps in selection
+    var usableCompCounter = 0; // number of Comps with keyframed text layers in selection
+    for (var i = 0; i <= (selectedComps.length-1); i++) {
+      if (selectedComps[i] instanceof CompItem) {
+        compCounter++;
+        if (findFirstTextLayerNum(selectedComps[i]) != null) {
+          usableCompCounter++;
+          if (usableCompCounter == 1) {
+            saveFolder = saveFolder.selectDlg("Select folder for SRTs");
+            if (saveFolder == null) throw "Operation cancelled!\nDestination folder not selected."
+          }
+          saveLayerToSRT(selectedComps[i].layer(findFirstTextLayerNum(selectedComps[i])), false, false);
+          if (abortMission) throw "Mission aborted by user.";
+        }
+      }
+    }
+    if (compCounter == 0) throw "Selection doesn't contain any Comps!";
+    if (usableCompCounter == 0 ) throw "Selected comps don't have keyframed text layers!"
+    alert("Exported " + filesExported + " file(s).\n\n" +
+    "Destination path: \n" + saveFolder.fsName);
+  }
+  catch(err) {
+    alert(err, scriptName, true);
+  }
+  break;
 
+  default:
+  alert("Unexpected error!", "Ups!", true);
+}
+
+  function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
+    if (showSummary === undefined) showSummary = true;
+    if (alwaysAskForFileLocation === undefined) alwaysAskForFileLocation = true;
+    var compName = subtitleLayer.containingComp.name;
     // prompt to save file
-    var TmpFile = new File(projectPath + "/" + theComp.name + ".srt");
-    SRTFile = TmpFile.saveDlg("Save selected layer as SRT file","SubRip:*.srt,All files:*.*");
-
+    var TmpFile = new File(saveFolder.absoluteURI + "/" + compName + ".srt");
+    if ((alwaysAskForFileLocation) || (TmpFile.exists)) {
+      SRTFile = TmpFile.saveDlg("Save layer \"" + subtitleLayer.name + "\" from comp \"" +
+      compName + "\" as SRT file","SubRip:*.srt,All files:*.*");
+    } else {
+      SRTFile = TmpFile;
+    }
     // if user didn't cancel...
     if (SRTFile != null) {
       var BOMSeq = "\u00EF\u00BB\u00BF"; // BOM sequence for UTF-8 encoding
@@ -56,9 +147,10 @@ var projectPath = app.project.file.path;
       SRTFile.encoding = "UTF-8"; // After BOM is added switch encoding to UTF-8
 
       var subNumber = 0; //counter for the number above the timecode (in the results)
-
-        var layerInTime = selLayers[0].inPoint;
-        var layerOutTime = selLayers[0].outPoint;
+      var selLayerSourceText = subtitleLayer.property("ADBE Text Properties").property("ADBE Text Document");
+      var totalKeys = selLayerSourceText.numKeys;
+        var layerInTime = subtitleLayer.inPoint;
+        var layerOutTime = subtitleLayer.outPoint;
         var firstKeyframe = 1; // Keyframe at layer IN point or just before it
         var lastKeyframe = totalKeys; // last keyframe before layer OUT point or exactly at it
         while (layerInTime > selLayerSourceText.keyTime(firstKeyframe+1)) {
@@ -69,7 +161,7 @@ var projectPath = app.project.file.path;
         }
 
 
-        for (var j = firstKeyframe; j <= (lastKeyframe); j++) {
+        for (var j = firstKeyframe; j <= lastKeyframe; j++) {
           var selText = selLayerSourceText.keyValue(j).toString();
           selText = stripWhitespace(selText);
           if (selText != "") {
@@ -100,16 +192,40 @@ var projectPath = app.project.file.path;
             }
           }
         }
-        alert("SRT for layer with " + totalKeys + " keyframes and " + subNumber + " subtitles exported");
       // close the text file
       SRTFile.close();
+      filesExported++;
+
+      if (showSummary) alert("SRT for layer with " + totalKeys + " keyframes and " + subNumber + " subtitles exported");
 
       // open text file in default app
-      SRTFile.execute();
+      if (showSummary) SRTFile.execute();
+    } else {
+      if (mode == 2) {
+        abortMission = confirm("File not saved!\nLayer \"" + subtitleLayer.name + "\" from comp \"" +
+        compName + "\".\n\nDo you want to abort mission?", true, "Abort mission?")
+      } else {
+        alert("File not saved!\nLayer \"" + subtitleLayer.name + "\" from comp \"" +
+        compName + "\".", "File not saved!", true);
+      }
     }
   }
-  catch(err) {
-    alert(err, scriptName, true);
+
+  function findFirstTextLayerNum(comp) {
+    var currentLayerNum = 0;
+    var found = false;
+    var currentLayer;
+    while ((currentLayerNum < comp.numLayers) && (!(found))) {
+      currentLayerNum++;
+      currentLayer = comp.layer(currentLayerNum);
+      if ((currentLayer instanceof TextLayer) && (currentLayer.enabled) &&
+      (currentLayer.property("ADBE Text Properties").property("ADBE Text Document").numKeys != 0)) found = true;
+    }
+    if (found) {
+      return currentLayerNum;
+    } else {
+      return null;
+    }
   }
 
   function stripWhitespace(str) {
