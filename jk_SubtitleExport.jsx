@@ -26,33 +26,39 @@ Select subtitle Text Layer you want to export, run the script, and save the file
 
 */
 
+var scriptName = "JK_SubtitleExport";
 var theComp = app.project.activeItem;
 var projectPath = app.project.file.path;
 
-// prompt to save file
-var TmpFile = new File(projectPath + "/" + theComp.name + ".srt");
-SRTFile = TmpFile.saveDlg("Save selected layer as SRT file","SubRip:*.srt,All files:*.*");
-
-// if user didn't cancel...
-if (SRTFile != null) {
-  var BOMSeq = "\u00EF\u00BB\u00BF"; // BOM sequence for UTF-8 encoding
-  // open file for "w"riting,
-  SRTFile.open("w","TEXT","????");
-  SRTFile.write(BOMSeq); // Manually add BOM
-  SRTFile.encoding = "UTF-8"; // After BOM is added switch encoding to UTF-8
-
   // Convert Subtitles
-  checkParam(1); // Check if text layer is selected. Uses needlesly complex function from other script.
-  // app.beginUndoGroup("JK_SubtitleExport");
-  var selLayer = app.project.activeItem.selectedLayers;
-  var subNumber = 0; //counter for the number above the timecode (in the results)
-  for(var i = 0; i<selLayer.length; i++){
-    if(selLayer[i] instanceof TextLayer){
-      var selLayerSourceText = selLayer[i].property("ADBE Text Properties").property("ADBE Text Document");
-      var totalKeys = selLayerSourceText.numKeys;
-      if (totalKeys > 0) {
-        var layerInTime = selLayer[i].inPoint;
-        var layerOutTime = selLayer[i].outPoint;
+  var selLayers = app.project.activeItem.selectedLayers;
+  try {
+    if (selLayers.length > 1) throw "Multiple layers selected.";
+    if (selLayers.length == 0) throw "No layer selected.";
+    if (!(selLayers[0] instanceof TextLayer)) throw "Selected layer is not a text layer.";
+    if (selLayers.length != 1) throw "???";
+
+    var selLayerSourceText = selLayers[0].property("ADBE Text Properties").property("ADBE Text Document");
+    var totalKeys = selLayerSourceText.numKeys;
+
+    if (totalKeys == 0) throw "Selected layer has no keyframes";
+
+    // prompt to save file
+    var TmpFile = new File(projectPath + "/" + theComp.name + ".srt");
+    SRTFile = TmpFile.saveDlg("Save selected layer as SRT file","SubRip:*.srt,All files:*.*");
+
+    // if user didn't cancel...
+    if (SRTFile != null) {
+      var BOMSeq = "\u00EF\u00BB\u00BF"; // BOM sequence for UTF-8 encoding
+      // open file for "w"riting,
+      SRTFile.open("w","TEXT","????");
+      SRTFile.write(BOMSeq); // Manually add BOM
+      SRTFile.encoding = "UTF-8"; // After BOM is added switch encoding to UTF-8
+
+      var subNumber = 0; //counter for the number above the timecode (in the results)
+
+        var layerInTime = selLayers[0].inPoint;
+        var layerOutTime = selLayers[0].outPoint;
         var firstKeyframe = 1; // Keyframe at layer IN point or just before it
         var lastKeyframe = totalKeys; // last keyframe before layer OUT point or exactly at it
         while (layerInTime > selLayerSourceText.keyTime(firstKeyframe+1)) {
@@ -95,12 +101,16 @@ if (SRTFile != null) {
           }
         }
         alert("SRT for layer with " + totalKeys + " keyframes and " + subNumber + " subtitles exported");
-      } else {
-        alert("No layer selected or layer has no keyframes");
-      }
+      // close the text file
+      SRTFile.close();
+
+      // open text file in default app
+      SRTFile.execute();
     }
   }
-  // app.endUndoGroup();
+  catch(err) {
+    alert(err, scriptName, true);
+  }
 
   function stripWhitespace(str) {
       return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
@@ -133,49 +143,3 @@ if (SRTFile != null) {
     var SRTTimecode = hDisplay + ":" + mDisplay + ":" + sDisplay + "," + msecDisplay;
     return SRTTimecode;
   }
-
-  function checkParam(ch){
-    var thisComp = null;
-    var selectLayer = null;
-    switch(ch){
-      case 0:
-      thisComp = app.project.activeItem;
-      if (thisComp == null || !(thisComp instanceof CompItem)){
-        alert ("Please Select a Comp", "Error");
-        return;
-      }
-      break;
-      case 1:
-      selectLayer = app.project.activeItem.selectedLayers;
-      if(selectLayer.length < 1){
-        alert ("Please Select a Layer(s)", "Error");
-        return;
-      } else {
-        var i ;
-        for( i = 0; i<selectLayer.length; i++){
-          if(selectLayer[i] instanceof TextLayer)
-          break;
-        }
-
-        if(i == selectLayer.length){
-          alert("Please Select a Text Layer(s)", "Error");
-          return;
-        }
-      }
-      break;
-      case 2:
-      if(ATSE.valInText == ""){
-        alert ("No Input Text ", "Error");
-        return;
-      }
-      break;
-      default:
-    }
-  }
-
-  // close the text file
-  SRTFile.close();
-
-  // open text file in default app
-  SRTFile.execute();
-}
