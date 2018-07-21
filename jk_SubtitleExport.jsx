@@ -1,5 +1,5 @@
 /*
-JK_SubtitleExport v0.3
+JK_SubtitleExport v0.4.0
 Copyright 2018 Jakub Kowalski
 
 This program is free software: you can redistribute it and/or modify
@@ -48,25 +48,50 @@ if (SRTFile != null) {
   var subNumber = 0; //counter for the number above the timecode (in the results)
   for(var i = 0; i<selLayer.length; i++){
     if(selLayer[i] instanceof TextLayer){
-      totalKeys = selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").numKeys;
+      var selLayerSourceText = selLayer[i].property("ADBE Text Properties").property("ADBE Text Document");
+      var totalKeys = selLayerSourceText.numKeys;
       if (totalKeys > 0) {
-        for (var j = 1; j <= (totalKeys-1); j++) {
-          var selText = selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyValue(j).toString();
+        var layerInTime = selLayer[i].inPoint;
+        var layerOutTime = selLayer[i].outPoint;
+        var firstKeyframe = 1; // Keyframe at layer IN point or just before it
+        var lastKeyframe = totalKeys; // last keyframe before layer OUT point or exactly at it
+        while (layerInTime > selLayerSourceText.keyTime(firstKeyframe+1)) {
+          firstKeyframe++;
+        }
+        while (layerOutTime < selLayerSourceText.keyTime(lastKeyframe)) {
+          lastKeyframe--;
+        }
+
+
+        for (var j = firstKeyframe; j <= (lastKeyframe); j++) {
+          var selText = selLayerSourceText.keyValue(j).toString();
           selText = stripWhitespace(selText);
           if (selText != "") {
-            var subStartTime = timeToSRTTimecode(selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyTime(j)+0.0015);
-            var subEndTime = timeToSRTTimecode(selLayer[i].property("ADBE Text Properties").property("ADBE Text Document").keyTime(j+1)+0.0015);
+            if ((subNumber > 0) || (selLayerSourceText.keyTime(j+1) >= layerInTime)) {
+              // ensure 1st subtitle doesn't start before layer IN point
+              if ((subNumber == 0) && ((selLayerSourceText.keyTime(j) < layerInTime) || (j == 1))) {
+                var subStartTime = timeToSRTTimecode(layerInTime+0.0015);
+              } else {
+                var subStartTime = timeToSRTTimecode(selLayerSourceText.keyTime(j)+0.0015);
+              }
 
-            //writing the results to file
-            subNumber++;
-            SRTFile.write(subNumber);
-            SRTFile.write("\r\n");
-            SRTFile.write(subStartTime);
-            SRTFile.write(" --> ");
-            SRTFile.write(subEndTime);
-            SRTFile.write("\r\n");
-            SRTFile.write(selText);
-            SRTFile.write("\r\n\r\n");
+              if (j == totalKeys) { // Ensure last time stamp is not beyond layer OUT point
+                var subEndTime = timeToSRTTimecode(layerOutTime+0.0015);
+              } else {
+                var subEndTime = timeToSRTTimecode(Math.min(selLayerSourceText.keyTime(j+1), layerOutTime) + 0.0015);
+              }
+
+              //writing the results to file
+              subNumber++;
+              SRTFile.write(subNumber);
+              SRTFile.write("\r\n");
+              SRTFile.write(subStartTime);
+              SRTFile.write(" --> ");
+              SRTFile.write(subEndTime);
+              SRTFile.write("\r\n");
+              SRTFile.write(selText);
+              SRTFile.write("\r\n\r\n");
+            }
           }
         }
         alert("SRT for layer with " + totalKeys + " keyframes and " + subNumber + " subtitles exported");
