@@ -15,45 +15,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This script will export subtitle text layer (with Source Text keyframes) to SRT file.
+-------------------------------------------------------------------------------
+
+This script creates SRT files from subtitle text layers (single layer with
+Source Text keyframes).
 It works with layers created by pt_ImportSubtitles script by Paul Tuerslay -
 https://aescripts.com/pt_importsubtitles/
 
 Inspired by Philipp Grolle's script - http://aenhancers.com/viewtopic.php?t=2116
 
-Instructions:
-This script has two modes of operation:
-- Export selected layer from active timeline.
-- Export first keyframed text layer from each selected comp.
-
-Single layer mode
-Select subtitle Text Layer you want to export, run the script, and save the SRT.
-If multiple layers are selected or selected layer doesn't have keyframes,
-script will throw an error.
-Timeline window must be active.
-
-Comp mode
-Select comps in Project window, run the script, and select destination folder.
-Script will export first keyframed and active text layer from each comp.
-By default script will use Comp name for file name. If file with the same name
-already exists, File Save window will appear.
-
-Version history:
-
-0.4.0
-- export from multiple comps at once
-
-0.3.2
-- export is limited to layer IN and OUT points
-- fixed/improved error checking
-
-0.3.1
-- contents of last keyframe are no longer ignored
-- default save location is the same as AEP
-- leading and trailing whitespace is removed
-
-0.3
-- first public version
+See the GitHub page - https://github.com/Issity/jk_SubtitleExport - to report
+a bug, request a feature, or get the latest version.
 
 */
 

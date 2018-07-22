@@ -7,10 +7,24 @@ It works with layers created by [pt_ImportSubtitles script by Paul Tuerslay](htt
 It will also work with manually created text layers as long as you want to export single layer with text on keyframes.
 
 ## How to use
-Select single text layer which has _Source text_ keyframes.
-Run the script.
-Select output file.
-If nothing went wrong you'll see a message with short summary.
+This script only works with text layers which have _Source text_ keyframes.
+There are two modes of operation:
+- Export selected layer from the active timeline.
+- Export first keyframed text layer from each selected comp.
+
+### Single layer mode
+Select subtitle Text Layer you want to export, run the script, and save the SRT.
+It's that simple.
+After successful export you will see a confirmation window with short summary.
+If multiple layers are selected or selected layer doesn't have keyframes, script will throw an error.
+Timeline window must be active.
+
+### Comp mode
+Select comps in the Project window, run the script, and select destination folder.
+Script will export first keyframed and active text layer from each comp.
+By default script will use Comp's name for file name. If file with the same name already exists, File Save window will appear.
+Any selected non-comp items (solids, footage, etc) are ignored.
+If there is no suitable text layer found, nothing will be exported from that comp.
 
 ## Why it's useful
 Common scenarios:
@@ -29,7 +43,7 @@ This script is very rough, created for my own needs. There's only minimal error 
 If it's useful for you too - that's great.
 
 ## Found a bug? Want a feature?
-You can report a bug or suggest a feature by creating a _New Issue_.
+You can report a bug or suggest a feature by creating a [New Issue](https://github.com/Issity/jk_SubtitleExport/issues/new).
 I might do something with it but won't promise.
 
 _Live long and prosper!_
