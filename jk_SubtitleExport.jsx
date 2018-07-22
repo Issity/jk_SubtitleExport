@@ -33,11 +33,12 @@ var scriptName = "JK_SubtitleExport";
 var projectPath = app.project.file.path;
 var saveFolder = new Folder(projectPath); // default save path is AEP location
 var selectedComps = app.project.selection;
+var selectedCompsLength = selectedComps.length;
 var mode = 0; // 0 - nothing selected; 1 - single layer; 2 - selected comps
 var filesExported = 0;
 var abortMission = false;
 
-if (selectedComps.length != 0) {
+if (selectedCompsLength != 0) {
   mode = 2;
 }
 
@@ -70,7 +71,7 @@ switch (mode) {
   try {
     var compCounter = 0; // number of Comps in selection
     var usableCompCounter = 0; // number of Comps with keyframed text layers in selection
-    for (var i = 0; i <= (selectedComps.length-1); i++) {
+    for (var i = 0; i <= (selectedCompsLength-1); i++) {
       if (selectedComps[i] instanceof CompItem) {
         compCounter++;
         if (findFirstTextLayerNum(selectedComps[i]) != null) {
@@ -86,8 +87,12 @@ switch (mode) {
     }
     if (compCounter == 0) throw "Selection doesn't contain any Comps!";
     if (usableCompCounter == 0 ) throw "Selected comps don't have keyframed text layers!"
-    alert("Exported " + filesExported + " file(s).\n\n" +
-    "Destination path: \n" + saveFolder.fsName);
+    alert("Selected items: \t\t" + selectedCompsLength + "\n" +
+          "Selected comps: \t\t" + compCounter + "\n" +
+          "Not suitable comps: \t" + (compCounter - usableCompCounter) + "\n" +
+          "Skipped by the user: \t" + (usableCompCounter - filesExported) + "\n\n" +
+          "Exported comps: \t\t" + filesExported + "\n\n" +
+          "Destination path: \n" + saveFolder.fsName);
   }
   catch(err) {
     alert(err, scriptName, true);
