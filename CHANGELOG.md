@@ -1,5 +1,8 @@
 # CHANGELOG for jk_SubtitleExport
 
+## v0.4.1
+- Prevent rogue subtitle being exported
+
 ## v0.4.0
 - export from multiple comps at once
 
