@@ -1,5 +1,5 @@
 /*
-JK_SubtitleExport v0.4.0
+JK_SubtitleExport v0.4.1
 Copyright 2018 Jakub Kowalski
 
 This program is free software: you can redistribute it and/or modify
@@ -160,8 +160,8 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
     var subNumber = 0; //counter for the number above the timecode (in the SRT)
     var selLayerSourceText = subtitleLayer.property("ADBE Text Properties").property("ADBE Text Document");
     var totalKeys = selLayerSourceText.numKeys;
-    var layerInTime = subtitleLayer.inPoint;
-    var layerOutTime = subtitleLayer.outPoint;
+    var layerInTime = fixAEMath(subtitleLayer.inPoint);
+    var layerOutTime = fixAEMath(subtitleLayer.outPoint);
     var firstKeyframe = 1; // Keyframe at layer IN point or just before it
     var lastKeyframe = totalKeys; // last keyframe before layer OUT point or exactly at it
     /*
@@ -169,10 +169,10 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
     Set lastKeyframe to the one at or just before layer OUT.
     This way we ignore text outside layer's IN and OUT.
     */
-    while (layerInTime > selLayerSourceText.keyTime(firstKeyframe+1)) {
+    while (layerInTime >= fixAEMath(selLayerSourceText.keyTime(firstKeyframe + 1))) {
       firstKeyframe++;
     }
-    while (layerOutTime < selLayerSourceText.keyTime(lastKeyframe)) {
+    while (layerOutTime <= fixAEMath(selLayerSourceText.keyTime(lastKeyframe))) {
       lastKeyframe--;
     }
 
@@ -181,7 +181,6 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
       var selText = selLayerSourceText.keyValue(j).toString();
       selText = stripWhitespace(selText);
       if (selText != "") {
-        if ((subNumber > 0) || (selLayerSourceText.keyTime(j + 1) >= layerInTime)) {
           // ensure 1st subtitle doesn't start before layer IN point
           if ((subNumber == 0) && ((selLayerSourceText.keyTime(j) < layerInTime) || (j == 1))) {
             var subStartTime = timeToSRTTimecode(layerInTime + 0.0015);
@@ -189,11 +188,13 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
             var subStartTime = timeToSRTTimecode(selLayerSourceText.keyTime(j) + 0.0015);
           }
 
-          if (j == totalKeys) { // Ensure last time stamp is not beyond layer OUT point
+          if (j == lastKeyframe) { // Ensure last time stamp is not beyond layer OUT point
             var subEndTime = timeToSRTTimecode(layerOutTime + 0.0015);
           } else {
             var subEndTime = timeToSRTTimecode(Math.min(selLayerSourceText.keyTime(j + 1), layerOutTime) + 0.0015);
           }
+          subNumber++;
+
 /*
 Why +0.0015?
 Video is frame based, while SRT is time based. This allows for SRT to be used
@@ -212,7 +213,6 @@ most common frame rates.
 */
 
           //writing the results to file
-          subNumber++;
           SRTFile.write(subNumber);
           SRTFile.write("\r\n");
           SRTFile.write(subStartTime);
@@ -221,7 +221,6 @@ most common frame rates.
           SRTFile.write("\r\n");
           SRTFile.write(selText);
           SRTFile.write("\r\n\r\n");
-        }
       }
     }
     // close the text file
@@ -241,6 +240,22 @@ most common frame rates.
       compName + "\".", "File not saved!", true);
     }
   }
+}
+
+/*
+num (Number)
+After Effects does some really weird math.
+Two items (like layer OUT point and a keyframe) which are at seemingly the same
+point in time, may return different time values. The difference is around 10th
+decimal place. In most cases it doesn't matter, but can seriously break
+comparisons when checking which of items is earlier in time.
+These time values may appear
+*/
+
+function fixAEMath (num) {
+  var precision = 100000; // probably 1000 would work just as good
+  num = Math.round(num * precision) / precision;
+  return num;
 }
 
 /*
