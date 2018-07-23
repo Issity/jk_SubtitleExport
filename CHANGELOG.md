@@ -1,5 +1,8 @@
 # CHANGELOG for jk_SubtitleExport
 
+## v0.5.0
+- Display status in Info window
+
 ## v0.4.1
 - Prevent rogue subtitle being exported
 
