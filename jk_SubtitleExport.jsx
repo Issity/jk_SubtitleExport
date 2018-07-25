@@ -1,5 +1,5 @@
 /*
-JK_SubtitleExport v0.4.1
+JK_SubtitleExport v0.5.0-alpha
 Copyright 2018 Jakub Kowalski
 
 This program is free software: you can redistribute it and/or modify
@@ -86,6 +86,9 @@ switch (mode) {
     var compCounter = 0; // number of Comps in selection
     var usableCompCounter = 0; // number of Comps with keyframed text layers in selection
     for (var i = 0; i <= (selectedCompsLength-1); i++) {
+      writeInfo(scriptName,
+        "Processing: " + (i + 1) + "/" + selectedCompsLength,
+        "I'm doing my job");
       if (selectedComps[i] instanceof CompItem) {
         compCounter++;
         if (findFirstTextLayerNum(selectedComps[i]) != null) {
@@ -98,6 +101,9 @@ switch (mode) {
           if (abortMission) throw "Mission aborted by user.";
         }
       }
+      writeInfo(scriptName,
+        "Processed: " + (i + 1) + "/" + selectedCompsLength,
+        "My job here is done");
     }
     if (compCounter == 0) throw "Selection doesn't contain any Comps!";
     if (usableCompCounter == 0 ) throw "Selected comps don't have keyframed text layers!"
@@ -242,6 +248,24 @@ most common frame rates.
   }
 }
 
+
+/*
+line1, line2, line3 (String)
+Writes text to Info window.
+Info window displays up to 3 lines of text. New line is added at the bottom and
+the topmost one is discarded. This function will replace whole buffer by writing
+empty lines if needed.
+*/
+
+function writeInfo(line1, line2, line3) {
+  if (line1 === undefined) line1 = "";
+  if (line2 === undefined) line2 = "";
+  if (line3 === undefined) line3 = "";
+  writeLn(line1);
+  writeLn(line2);
+  writeLn(line3);
+
+
 /*
 num (Number)
 After Effects does some really weird math.
@@ -257,6 +281,7 @@ function fixAEMath (num) {
   num = Math.round(num * precision) / precision;
   return num;
 }
+
 
 /*
 comp (CompItem)
