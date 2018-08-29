@@ -264,7 +264,7 @@ function writeInfo(line1, line2, line3) {
   writeLn(line1);
   writeLn(line2);
   writeLn(line3);
-
+}
 
 /*
 num (Number)
