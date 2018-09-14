@@ -1,5 +1,8 @@
 # CHANGELOG for jk_SubtitleExport
 
+## v0.5.2
+- Fix crash if project was never saved
+
 ## v0.5.1
 - Fix encoding issue on some Windows 10 systems
 

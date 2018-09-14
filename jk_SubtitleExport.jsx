@@ -1,5 +1,5 @@
 /*
-JK_SubtitleExport v0.5.1
+JK_SubtitleExport v0.5.2
 Copyright 2018 Jakub Kowalski
 
 This program is free software: you can redistribute it and/or modify
@@ -30,13 +30,20 @@ a bug, request a feature, or get the latest version.
 */
 
 var scriptName = "JK_SubtitleExport";
-var projectPath = app.project.file.path;
-var saveFolder = new Folder(projectPath); // default save path is AEP location
+var projectPath;
+var saveFolder;
 var selectedComps = app.project.selection;
 var selectedCompsLength = selectedComps.length;
 var mode = 0; // 0 - nothing selected; 1 - single layer; 2 - selected comps
 var filesExported = 0;
 var abortMission = false;
+
+if (app.project.file != null) {
+  projectPath = app.project.file.path;
+  saveFolder = new Folder(projectPath); // default save path is AEP location
+} else {
+  saveFolder = Folder.myDocuments; // if project is not saved use Documents folder
+}
 
 /*
 Detect if there is
