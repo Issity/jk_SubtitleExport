@@ -1,5 +1,8 @@
 # CHANGELOG for jk_SubtitleExport
 
+## v0.5.1
+- Fix encoding issue on some Windows 10 systems
+
 ## v0.5.0
 - Display status in Info window
 

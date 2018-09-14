@@ -1,5 +1,5 @@
 /*
-JK_SubtitleExport v0.5.0-alpha
+JK_SubtitleExport v0.5.1
 Copyright 2018 Jakub Kowalski
 
 This program is free software: you can redistribute it and/or modify
@@ -157,11 +157,10 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
   }
   // if user didn't cancel...
   if (SRTFile != null) {
-    var BOMSeq = "\u00EF\u00BB\u00BF"; // BOM sequence for UTF-8 encoding
     // open file for "w"riting,
     SRTFile.open("w","TEXT","????");
-    SRTFile.write(BOMSeq); // Manually add BOM
-    SRTFile.encoding = "UTF-8"; // After BOM is added switch encoding to UTF-8
+    SRTFile.encoding = "UTF-8";
+    SRTFile.write("\uFEFF"); // Add BOM
 
     var subNumber = 0; //counter for the number above the timecode (in the SRT)
     var selLayerSourceText = subtitleLayer.property("ADBE Text Properties").property("ADBE Text Document");
