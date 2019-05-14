@@ -1,5 +1,8 @@
 # CHANGELOG for jk_SubtitleExport
 
+## v0.5.3
+- Code clean-up
+
 ## v0.5.2
 - Fix crash if project was never saved
 

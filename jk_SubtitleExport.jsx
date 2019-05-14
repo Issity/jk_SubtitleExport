@@ -1,5 +1,5 @@
 /*
-JK_SubtitleExport v0.5.2
+JK_SubtitleExport v0.5.3
 Copyright 2018 Jakub Kowalski
 
 This program is free software: you can redistribute it and/or modify
@@ -98,13 +98,13 @@ switch (mode) {
         "I'm doing my job");
       if (selectedComps[i] instanceof CompItem) {
         compCounter++;
-        if (findFirstTextLayerNum(selectedComps[i]) != null) {
+        if (findFirstSubtitleLayerNum(selectedComps[i]) != null) {
           usableCompCounter++;
           if (usableCompCounter == 1) {
             saveFolder = saveFolder.selectDlg("Select folder for SRTs");
             if (saveFolder == null) throw "Operation cancelled!\nDestination folder not selected."
           }
-          saveLayerToSRT(selectedComps[i].layer(findFirstTextLayerNum(selectedComps[i])), false, false);
+          saveLayerToSRT(selectedComps[i].layer(findFirstSubtitleLayerNum(selectedComps[i])), false, false);
           if (abortMission) throw "Mission aborted by user.";
         }
       }
@@ -296,7 +296,7 @@ Returns number of the first TextLayer which has keyframes and is enables (eye
 icon). If no such layer is found, returns null.
 */
 
-function findFirstTextLayerNum(comp) {
+function findFirstSubtitleLayerNum(comp) {
   var currentLayerNum = 0;
   var found = false;
   var currentLayer;
