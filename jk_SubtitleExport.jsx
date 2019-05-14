@@ -169,7 +169,8 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
     SRTFile.encoding = "UTF-8";
     SRTFile.write("\uFEFF"); // Add BOM
 
-    var subNumber = 0; //counter for the number above the timecode (in the SRT)
+    var subNumber = 0; // counter for the number above the timecode (in the SRT)
+    var offset = 0.0015; // More on this below
     var selLayerSourceText = subtitleLayer.property("ADBE Text Properties").property("ADBE Text Document");
     var totalKeys = selLayerSourceText.numKeys;
     var layerInTime = fixAEMath(subtitleLayer.inPoint);
@@ -195,29 +196,29 @@ function saveLayerToSRT(subtitleLayer, showSummary, alwaysAskForFileLocation) {
       if (selText != "") {
           // ensure 1st subtitle doesn't start before layer IN point
           if ((subNumber == 0) && ((selLayerSourceText.keyTime(j) < layerInTime) || (j == 1))) {
-            var subStartTime = timeToSRTTimecode(layerInTime + 0.0015);
+            var subStartTime = timeToSRTTimecode(layerInTime + offset);
           } else {
-            var subStartTime = timeToSRTTimecode(selLayerSourceText.keyTime(j) + 0.0015);
+            var subStartTime = timeToSRTTimecode(selLayerSourceText.keyTime(j) + offset);
           }
 
           if (j == lastKeyframe) { // Ensure last time stamp is not beyond layer OUT point
-            var subEndTime = timeToSRTTimecode(layerOutTime + 0.0015);
+            var subEndTime = timeToSRTTimecode(layerOutTime + offset);
           } else {
-            var subEndTime = timeToSRTTimecode(Math.min(selLayerSourceText.keyTime(j + 1), layerOutTime) + 0.0015);
+            var subEndTime = timeToSRTTimecode(Math.min(selLayerSourceText.keyTime(j + 1), layerOutTime) + offset);
           }
           subNumber++;
 
 /*
-Why +0.0015?
+Why +0.0015 offset?
 Video is frame based, while SRT is time based. This allows for SRT to be used
 with different frame rate videos, which is good.
-The bad thing is each frame is has a duration (40 ms for 25 FPS or 41.7 for
-23.976 FPS). So if subtitle starts or ends at specific frame what time should be
+The bad thing is each frame has a duration (40 ms for 25 FPS or 41.7 for
+23.976 FPS). So if subtitle starts or ends at specific frame, what time should be
 put in the time stamp? First (1 or 0 based?) millisecond of this frame, last,
 somewhere between?
 I tried AE's default which is start time of the frame. Unfortunately this
-caused issues with pt_ImportSubtitles script. It's default setting rounds
-time stamps down to the nearest keyframe. As the result some keyframes were
+caused issues with pt_ImportSubtitles script. Its default setting rounds
+time stamps down to the nearest keyframe. As a result some keyframes were
 shifted one frame back after import-export-import roundtrip. Not using rounding
 makes keyframes to appear between video frames, which causes other issues.
 As a workaround 1.5 ms is added to the SRT time stamps. So far it works well for
